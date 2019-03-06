@@ -27,6 +27,7 @@ public class EmailWithImage {
 	private final String PASSWORD_NEXT_BUTTON = "passwordNext";
 	private final String INBOX_URL = "https://mail.google.com/mail/#inbox";
 	private final String SENT_URL = "https://mail.google.com/mail/#sent";
+	private final String MSG_COUNT_SPAN = "span.ts";
 	
 	//Class Constructor
 	public EmailWithImage(String emailAddress, String emailPassword, String chromeDriverPath) {
@@ -92,21 +93,34 @@ public class EmailWithImage {
 	
 	public void updateSentEmailCount() {
 		//visit SENT_URL and obtains sent email count
+		try {
+			visitUrl(SENT_URL);
+			sentEmailCount = findMessageCount();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean confirmSentEmailCount() {
 		//visit SENT_URL and checks if sentEmailCount incremented by one
-		return true;
+		try {
+			visitUrl(SENT_URL);
+			return (sentEmailCount+1 == findMessageCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 	public boolean checkInitialState() {
-		//check if account is in initial state by finding "inbox (selected element)" and "compose" button
-		return true;
+		//check if account is in initial state by finding "inbox (selected element)"
+		String checkUrl = driver.getCurrentUrl();
+		return checkUrl.equals(INBOX_URL);
 	}
 	
-	public boolean resetInitialState() {
+	public void resetInitialState() {
 		//reset initial state, go to INBOX_URL
-		return true;
+		visitUrl(INBOX_URL);
 	}
 	
 	//Get & Set Methods
@@ -161,6 +175,13 @@ public class EmailWithImage {
 	
 	private void incrementSentEmailCount() {
 		this.sentEmailCount++;
+	}
+	
+	private int findMessageCount() {
+		//Finds message count span and gets text
+		WebElement msgCountSpan = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MSG_COUNT_SPAN)));
+		return Integer.valueOf(msgCountSpan.getText());
 	}
 	
 }

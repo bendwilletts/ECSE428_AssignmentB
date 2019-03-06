@@ -12,6 +12,15 @@ public class Main {
 		
 		boolean val = email.signIn();
 		System.out.println(val);
+		
+		email.updateSentEmailCount();
+		System.out.println(email.getSentEmailCount());
+		
+		System.out.println(email.checkInitialState());
+		email.resetInitialState();
+		
+		System.out.println(email.checkInitialState());
+		
 	}
 
 }
