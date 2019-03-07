@@ -1,6 +1,11 @@
 package ca.mcgill.ecse428.main;
 
+import java.util.List;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -13,7 +18,7 @@ public class EmailWithImage {
 	private WebDriver driver;
 	private String chromeDriverPath;
 	private String currentUrl;
-	private String storedFileName;
+	private String storedFilePath;
 	private String storedRecipientEmail;
 	private String emailAddress;
 	private String emailPassword;
@@ -27,7 +32,16 @@ public class EmailWithImage {
 	private final String PASSWORD_NEXT_BUTTON = "passwordNext";
 	private final String INBOX_URL = "https://mail.google.com/mail/#inbox";
 	private final String SENT_URL = "https://mail.google.com/mail/#sent";
-	private final String MSG_COUNT_SPAN = "span.ts";
+	private final String EMAIL_ELEMENT = "tr.zA.yO.byw";
+	private final String COMPOSE_BUTTON = "div.T-I.J-J5-Ji.T-I-KE.L3";
+	private final String TO_TEXT_AREA = "textarea[name='to']";
+	private final String SUBJECT_TEXT_AREA = "input[name='subjectbox']";
+	private final String MESSAGE_TEXT_AREA = "div[aria-label='Message Body']";
+	private final String SEND_BUTTON = "div[aria-label='Send ‪(⌘Enter)‬']";
+	private final String ATTACH_BUTTON = "div.a1.aaA.aMZ";
+	private final String ATTACH_LINK = "a.dO";
+	private final String MESSAGE_SENT_NOTIFICATION = "span.ag.a8k";
+
 	
 	//Class Constructor
 	public EmailWithImage(String emailAddress, String emailPassword, String chromeDriverPath) {
@@ -72,7 +86,8 @@ public class EmailWithImage {
 				System.out.println("Email or Password Incorrect!");
 				return false;
 			}
-			
+			updateSentEmailCount();
+			resetInitialState();
 			signedIn = true;
 			return true;
 		} catch (Exception e) {
@@ -83,12 +98,91 @@ public class EmailWithImage {
 	
 	public boolean sendEmailWithImage() {
 		//Send email with an image attachment to a recipient
-		return sendEmailWithImage(storedRecipientEmail, storedFileName);
+		return sendEmailWithImage(storedRecipientEmail, storedFilePath);
 	}
 	
-	public boolean sendEmailWithImage(String recipientEmail, String fileName) {
+	public boolean sendEmailWithImage(String recipientEmail, String filePath) {
 		//Send email with an image attachment to a recipient
-		return true;
+		try {
+			updateSentEmailCount();
+			resetInitialState();
+			clickComposeButton();
+			enterRecipientEmail(recipientEmail);
+			attachFile(filePath);
+			clickSendButton();
+			return true;
+		} catch (Exception e) {
+			if (e instanceof UnhandledAlertException) {
+				return true;
+			}
+			e.printStackTrace();
+			return false;
+		}
+		
+		
+	}
+	
+	public boolean sendEmailWithImage(String recipientEmail, String filePath, String subject, String message) {
+		//Send email with an image attachment to a recipient including subject and message
+		try {
+			updateSentEmailCount();
+			resetInitialState();
+			clickComposeButton();
+			enterRecipientEmail(recipientEmail);
+			enterSubjectAndMessage(subject, message);
+			attachFile(filePath);
+			clickSendButton();
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public void clickComposeButton() {
+		WebElement composeButton = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(COMPOSE_BUTTON)));
+		composeButton.click();
+	}
+	
+	public void enterRecipientEmail(String recipientEmail) {
+		WebElement toTextArea = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(TO_TEXT_AREA)));
+		toTextArea.sendKeys(recipientEmail);
+	}
+	
+	public void enterSubjectAndMessage(String subject, String message) {
+		WebElement subjectTextArea = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(SUBJECT_TEXT_AREA)));
+		subjectTextArea.sendKeys(subject);
+		
+		WebElement messageTextArea = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_TEXT_AREA)));
+		messageTextArea.sendKeys(message);
+	}
+	
+	public void attachFile(String filePath) {
+		try {
+		driver.findElement(By.cssSelector(ATTACH_BUTTON)).click();
+		Runtime.getRuntime().exec("osascript " + "src/ca/mcgill/ecse428/main/scripts/attachfile_mac.scpt " + filePath);
+		(new WebDriverWait(driver, 10))
+        .until(ExpectedConditions.elementToBeClickable(By.cssSelector(ATTACH_LINK)));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void clickSendButton() {
+		try {
+			WebElement sendButton = driver.findElement(By.cssSelector(SEND_BUTTON));
+			sendButton.click();
+			(new WebDriverWait(driver, 10))
+	        .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)));
+		} catch (UnhandledAlertException uae) {
+			acceptPrompt();
+			(new WebDriverWait(driver, 10))
+	        .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)));
+		}
 	}
 	
 	public void updateSentEmailCount() {
@@ -96,6 +190,7 @@ public class EmailWithImage {
 		try {
 			visitUrl(SENT_URL);
 			sentEmailCount = findMessageCount();
+			System.out.println("Sent Email Count = " + sentEmailCount);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -103,13 +198,8 @@ public class EmailWithImage {
 	
 	public boolean confirmSentEmailCount() {
 		//visit SENT_URL and checks if sentEmailCount incremented by one
-		try {
 			visitUrl(SENT_URL);
 			return (sentEmailCount+1 == findMessageCount());
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
 	}
 	
 	public boolean checkInitialState() {
@@ -121,6 +211,8 @@ public class EmailWithImage {
 	public void resetInitialState() {
 		//reset initial state, go to INBOX_URL
 		visitUrl(INBOX_URL);
+		WebDriverWait wait = new WebDriverWait(driver, 10);
+		wait.until(ExpectedConditions.titleContains("Inbox"));
 	}
 	
 	//Get & Set Methods
@@ -134,12 +226,12 @@ public class EmailWithImage {
 		return currentUrl;
 	}
 	
-	public void setFileName(String fileName) {
-		this.storedFileName = fileName;
+	public void setFilePath(String filePath) {
+		this.storedFilePath = filePath;
 	}
 	
-	public String getFileName() {
-		return storedFileName;
+	public String getFilePath() {
+		return storedFilePath;
 	}
 	
 	public void setRecipientEmail(String recipientEmail) {
@@ -173,15 +265,16 @@ public class EmailWithImage {
 		}
 	}	
 	
-	private void incrementSentEmailCount() {
-		this.sentEmailCount++;
-	}
-	
 	private int findMessageCount() {
 		//Finds message count span and gets text
-		WebElement msgCountSpan = (new WebDriverWait(driver, 10))
-                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MSG_COUNT_SPAN)));
-		return Integer.valueOf(msgCountSpan.getText());
+		(new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.titleContains("Sent Mail"));
+		List<WebElement> sentMessages = driver.findElements(By.cssSelector(EMAIL_ELEMENT));
+		return sentMessages.size();
+	}
+	
+	private void acceptPrompt() {
+		driver.switchTo().alert().accept();
 	}
 	
 }
