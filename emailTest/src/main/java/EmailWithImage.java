@@ -1,4 +1,4 @@
-package ca.mcgill.ecse428.main;
+
 
 import java.util.List;
 
@@ -164,7 +164,7 @@ public class EmailWithImage {
 	public void attachFile(String filePath) {
 		try {
 		driver.findElement(By.cssSelector(ATTACH_BUTTON)).click();
-		Runtime.getRuntime().exec("osascript " + "src/ca/mcgill/ecse428/main/scripts/attachfile_mac.scpt " + filePath);
+		Runtime.getRuntime().exec("osascript " + "src/main/java/attachfile_mac.scpt " + filePath);
 		(new WebDriverWait(driver, 10))
         .until(ExpectedConditions.elementToBeClickable(By.cssSelector(ATTACH_LINK)));
 		} catch (Exception e) {
