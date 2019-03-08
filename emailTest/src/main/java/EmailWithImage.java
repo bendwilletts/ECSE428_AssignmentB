@@ -40,6 +40,9 @@ public class EmailWithImage {
 	private final String SEND_BUTTON = "div[aria-label='Send ‪(⌘Enter)‬']";
 	private final String ATTACH_BUTTON = "div.a1.aaA.aMZ";
 	private final String ATTACH_LINK = "a.dO";
+	private final String ATTACH_DRIVE_FILE_BUTTON = "div.aA7.aaA.aMZ";
+	private final String DRIVE_FILE_AREA = "fe-cg-Oc-tc";
+	private final String INSERT_DRIVE_FILE_BUTTON = "div.a-b-c.d-u.d-u-F.Mf-tb-Qk-mk.d-u-G-H";
 	private final String MESSAGE_SENT_NOTIFICATION = "span.ag.a8k";
 
 	
@@ -172,6 +175,20 @@ public class EmailWithImage {
 		}
 	}
 	
+	public void attachCloudFile(String fileName) {
+		try {
+			driver.findElement(By.cssSelector(ATTACH_DRIVE_FILE_BUTTON)).click();
+			WebElement fileButton = (new WebDriverWait(driver, 10))
+	                .until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.Gd-Rg-vj-Kc.Gd-he-ie")));
+			fileButton.click();
+			WebElement insertButton = (new WebDriverWait(driver, 10))
+			.until(ExpectedConditions.elementToBeClickable(By.cssSelector(INSERT_DRIVE_FILE_BUTTON)));
+			insertButton.click();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void clickSendButton() {
 		try {
 			WebElement sendButton = driver.findElement(By.cssSelector(SEND_BUTTON));
@@ -213,6 +230,10 @@ public class EmailWithImage {
 		visitUrl(INBOX_URL);
 		WebDriverWait wait = new WebDriverWait(driver, 10);
 		wait.until(ExpectedConditions.titleContains("Inbox"));
+	}
+	
+	public void shutdownDriver() {
+		driver.quit();
 	}
 	
 	//Get & Set Methods
@@ -263,7 +284,7 @@ public class EmailWithImage {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}	
+	}
 	
 	private int findMessageCount() {
 		//Finds message count span and gets text

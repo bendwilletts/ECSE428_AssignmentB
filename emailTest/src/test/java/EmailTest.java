@@ -1,7 +1,11 @@
 
 
 import cucumber.annotation.en.Given;
- 
+import cucumber.annotation.en.When;
+import cucumber.annotation.en.And;
+import cucumber.annotation.en.Then;
+import cucumber.annotation.Before;
+import cucumber.annotation.After;
 
 public class EmailTest {
 	
@@ -18,10 +22,55 @@ public class EmailTest {
 
 	private EmailWithImage email;
 	
-	@Given("^I am logged into a Gmail account$")
-	public void loginToGmailAccount() {
+	@Before
+	public void setup() {
 		email = new EmailWithImage(EMAIL_ADDRESS, EMAIL_PASSWORD, PATH_TO_CHROME_DRIVER);
 		email.signIn();
+	}
+	
+	@After
+	public void cleanup() {
+		email.shutdownDriver();
+	}
+	
+	@Given("^I am logged into a Gmail account$")
+	public void loginToGmailAccount() throws Exception {
+		if(!email.checkInitialState()) {
+			throw new Exception("Not logged in!");
+		};
+	}
+	
+	@When("^I compose an email$")
+	public void composeEmail() {
+		email.clickComposeButton();
+	}
+	
+	@And("^I specify \"([^\"]*)\" as the recipient$")
+	public void specifyRecipient(String recipient) {
+		email.enterRecipientEmail(recipient);
+	}
+	
+	@And("^I attach local file \"([^\"]*)\" to the email")
+	public void attachLocalFile(String file) {
+		email.attachFile(PATH_TO_IMAGE_FILES + file);
+	}
+	
+	@And("^I attach cloud file \"([^\"]*)\" to the email")
+	public void attachCloudFile(String file) {
+		email.attachCloudFile(file);
+	}
+	
+	@And("^I send the email$")
+	public void sendEmail() {
+		email.clickSendButton();
+	}
+	
+	@Then("^the recipient should receive the email with the attached file$")
+	public void recipientRecievesEmailWithFile() throws Exception {
+		if(!email.confirmSentEmailCount()) {
+			throw new Exception("Email not sent!");
+		};
+		email.resetInitialState();
 	}
 }
 
