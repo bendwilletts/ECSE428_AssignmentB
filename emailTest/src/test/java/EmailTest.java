@@ -50,12 +50,17 @@ public class EmailTest {
 		email.enterRecipientEmail(recipient);
 	}
 	
-	@And("^I attach local file \"([^\"]*)\" to the email")
+	@And("^I specify an invalid recipient \"([^\"]*)\"$")
+	public void specifyInvalidRecipient(String invalidRecipient) {
+		email.enterRecipientEmail(invalidRecipient);
+	}
+	
+	@And("^I attach a local file \"([^\"]*)\" to the email$")
 	public void attachLocalFile(String file) {
 		email.attachFile(PATH_TO_IMAGE_FILES + file);
 	}
 	
-	@And("^I attach cloud file \"([^\"]*)\" to the email")
+	@And("^I attach cloud file \"([^\"]*)\" to the email$")
 	public void attachCloudFile(String file) {
 		email.attachCloudFile(file);
 	}
@@ -69,7 +74,15 @@ public class EmailTest {
 	public void recipientRecievesEmailWithFile() throws Exception {
 		if(!email.confirmSentEmailCount()) {
 			throw new Exception("Email not sent!");
-		};
+		}
+		email.resetInitialState();
+	}
+	
+	@Then("^I should receive an error message notifying me that the email was not recognised$")
+	public void errorMessageRecieved() throws Exception {
+		if(!email.confirmNotRecognisedError()) {
+			throw new Exception("Error not recieved");
+		}
 		email.resetInitialState();
 	}
 }

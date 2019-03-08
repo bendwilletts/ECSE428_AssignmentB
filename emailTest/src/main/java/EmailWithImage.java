@@ -5,10 +5,13 @@ import java.util.List;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.UnexpectedAlertBehaviour;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -44,6 +47,7 @@ public class EmailWithImage {
 	private final String DRIVE_FILE_AREA = "fe-cg-Oc-tc";
 	private final String INSERT_DRIVE_FILE_BUTTON = "div.a-b-c.d-u.d-u-F.Mf-tb-Qk-mk.d-u-G-H";
 	private final String MESSAGE_SENT_NOTIFICATION = "span.ag.a8k";
+	private final String ERROR_MESSAGE = "Error";
 
 	
 	//Class Constructor
@@ -168,7 +172,7 @@ public class EmailWithImage {
 		try {
 		driver.findElement(By.cssSelector(ATTACH_BUTTON)).click();
 		Runtime.getRuntime().exec("osascript " + "src/main/java/attachfile_mac.scpt " + filePath);
-		(new WebDriverWait(driver, 10))
+		(new WebDriverWait(driver, 20))
         .until(ExpectedConditions.elementToBeClickable(By.cssSelector(ATTACH_LINK)));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -194,11 +198,15 @@ public class EmailWithImage {
 			WebElement sendButton = driver.findElement(By.cssSelector(SEND_BUTTON));
 			sendButton.click();
 			(new WebDriverWait(driver, 10))
-	        .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)));
+	        .until(ExpectedConditions.or(
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)),
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector("button.J-at1-auR"))));
 		} catch (UnhandledAlertException uae) {
 			acceptPrompt();
 			(new WebDriverWait(driver, 10))
-	        .until(ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)));
+	        .until(ExpectedConditions.or(
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)),
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector("button.J-at1-auR"))));
 		}
 	}
 	
@@ -217,6 +225,11 @@ public class EmailWithImage {
 		//visit SENT_URL and checks if sentEmailCount incremented by one
 			visitUrl(SENT_URL);
 			return (sentEmailCount+1 == findMessageCount());
+	}
+	
+	public boolean confirmNotRecognisedError() {
+		String errorMessage = driver.findElement(By.cssSelector("span.Kj-JD-K7-K0")).getText();
+		return(errorMessage.equals(ERROR_MESSAGE));
 	}
 	
 	public boolean checkInitialState() {
@@ -291,6 +304,7 @@ public class EmailWithImage {
 		(new WebDriverWait(driver, 10))
                 .until(ExpectedConditions.titleContains("Sent Mail"));
 		List<WebElement> sentMessages = driver.findElements(By.cssSelector(EMAIL_ELEMENT));
+		System.out.println("Sen messages:"  + sentMessages);
 		return sentMessages.size();
 	}
 	
