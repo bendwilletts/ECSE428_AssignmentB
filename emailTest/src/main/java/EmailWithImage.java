@@ -1,6 +1,9 @@
 
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -38,14 +41,19 @@ public class EmailWithImage {
 	private final String EMAIL_ELEMENT = "tr.zA.yO.byw";
 	private final String COMPOSE_BUTTON = "div.T-I.J-J5-Ji.T-I-KE.L3";
 	private final String TO_TEXT_AREA = "textarea[name='to']";
+	private final String CC_BUTTON = "span[aria-label='Add Cc recipients ‪(⌘⇧C)‬']";
+	private final String CC_TEXT_AREA = "textarea[name='cc']";
 	private final String SUBJECT_TEXT_AREA = "input[name='subjectbox']";
 	private final String MESSAGE_TEXT_AREA = "div[aria-label='Message Body']";
 	private final String SEND_BUTTON = "div[aria-label='Send ‪(⌘Enter)‬']";
 	private final String ATTACH_BUTTON = "div.a1.aaA.aMZ";
 	private final String ATTACH_LINK = "a.dO";
 	private final String ATTACH_DRIVE_FILE_BUTTON = "div.aA7.aaA.aMZ";
-	private final String DRIVE_FILE_AREA = "fe-cg-Oc-tc";
-	private final String INSERT_DRIVE_FILE_BUTTON = "div.a-b-c.d-u.d-u-F.Mf-tb-Qk-mk.d-u-G-H";
+	private final String DRIVE_SEARCH_BAR = "input.Mf-im-Qc-qb.d-Rb.Mf-im-Rn-yk";
+	private final String DRIVE_SEARCH_BUTTON = "div[aria-label='Search']";
+	private final String DRIVE_FILE_AREA = "div.fe-Rg-cg-O-Hj-Ij";
+	private final String DRIVE_FILE_NAME = "div.Mf-mc-nc.Mf-mc-V.V";
+	private final String INSERT_DRIVE_FILE_BUTTON = "div.a-b-c.d-u.d-u-F.Mf-tb-Qk-mk";
 	private final String MESSAGE_SENT_NOTIFICATION = "span.ag.a8k";
 	private final String ERROR_MESSAGE = "Error";
 
@@ -129,6 +137,29 @@ public class EmailWithImage {
 		
 	}
 	
+	public boolean sendEmailWithImageAndCC(String recipientEmail, String filePath, String ccEmail) {
+		//Send email with an image attachment to a recipient
+		try {
+			updateSentEmailCount();
+			resetInitialState();
+			clickComposeButton();
+			clickCCButton();
+			enterRecipientEmail(recipientEmail);
+			enterCCEmail(ccEmail);
+			attachFile(filePath);
+			clickSendButton();
+			return true;
+		} catch (Exception e) {
+			if (e instanceof UnhandledAlertException) {
+				return true;
+			}
+			e.printStackTrace();
+			return false;
+		}
+		
+		
+	}
+	
 	public boolean sendEmailWithImage(String recipientEmail, String filePath, String subject, String message) {
 		//Send email with an image attachment to a recipient including subject and message
 		try {
@@ -152,10 +183,22 @@ public class EmailWithImage {
 		composeButton.click();
 	}
 	
+	public void clickCCButton() {
+		WebElement ccButton = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(CC_BUTTON)));
+		ccButton.click();
+	}
+	
 	public void enterRecipientEmail(String recipientEmail) {
 		WebElement toTextArea = (new WebDriverWait(driver, 10))
                 .until(ExpectedConditions.elementToBeClickable(By.cssSelector(TO_TEXT_AREA)));
 		toTextArea.sendKeys(recipientEmail);
+	}
+	
+	public void enterCCEmail(String ccEmail) {
+		WebElement ccTextArea = (new WebDriverWait(driver, 10))
+                .until(ExpectedConditions.elementToBeClickable(By.cssSelector(CC_TEXT_AREA)));
+		ccTextArea.sendKeys(ccEmail);
 	}
 	
 	public void enterSubjectAndMessage(String subject, String message) {
@@ -182,12 +225,30 @@ public class EmailWithImage {
 	public void attachCloudFile(String fileName) {
 		try {
 			driver.findElement(By.cssSelector(ATTACH_DRIVE_FILE_BUTTON)).click();
+			
+			int frameIndex = findDriveIFrame();
+			
+			driver.switchTo().frame(frameIndex); // switch to popup window
+			
+			(new WebDriverWait(driver, 10)).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(DRIVE_FILE_AREA)));
+			WebElement driveSearchBar = driver.findElement(By.cssSelector(DRIVE_SEARCH_BAR));
+			driveSearchBar.sendKeys(fileName);
+			
+//			WebElement driveSearchButton = driver.findElement(By.cssSelector(DRIVE_SEARCH_BUTTON));
+//			driveSearchButton.click();
+//			
+//			driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+			
+			driveSearchBar.click();
 			WebElement fileButton = (new WebDriverWait(driver, 10))
-	                .until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.Gd-Rg-vj-Kc.Gd-he-ie")));
+					.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(DRIVE_FILE_NAME)));
 			fileButton.click();
-			WebElement insertButton = (new WebDriverWait(driver, 10))
-			.until(ExpectedConditions.elementToBeClickable(By.cssSelector(INSERT_DRIVE_FILE_BUTTON)));
-			insertButton.click();
+			
+//			WebElement insertButton = (new WebDriverWait(driver, 10))
+//					.until(ExpectedConditions.elementToBeClickable(By.cssSelector(INSERT_DRIVE_FILE_BUTTON)));
+//			insertButton.click();
+//			
+			driver.switchTo().defaultContent();  // switch back to parent window
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -310,6 +371,21 @@ public class EmailWithImage {
 	
 	private void acceptPrompt() {
 		driver.switchTo().alert().accept();
+	}
+	
+	private int findDriveIFrame() {
+		int size = driver.findElements(By.tagName("iframe")).size();
+		int frameIndex = -1;
+		System.out.println(size);
+	    for(int i=0; i<size; i++){
+			driver.switchTo().frame(i);
+			int total=driver.findElements(By.cssSelector(DRIVE_FILE_AREA)).size();
+			if (total > 0) {
+				frameIndex = i;
+			}
+			driver.switchTo().defaultContent();
+	    }
+	    return frameIndex;
 	}
 	
 }
