@@ -1,4 +1,4 @@
-Feature: Send Email With Attachement
+Feature: Send Email With Attachment    
 
 Scenario Outline: Send an email with a local file attached
 
@@ -22,6 +22,30 @@ Examples:
     | udaysahni@outlook.com | testfile1.gif |
     | udaysahni@outlook.com | testfile2.jpg |
     
+Scenario Outline: Send an email with a CC'd email and a local file attached
+
+Given I am logged into a Gmail account
+
+When I compose an email
+
+And I CC "<ccrecipient>" on the email
+
+And I specify "<recipient>" as the recipient
+
+And I attach a local file "<file>" to the email
+
+And I send the email
+
+Then the recipient should receive the email with the attached file
+
+Examples: 
+    | recipient | ccrecipient | file |
+    | uday147@hotmail.com | udaysahni@outlook.com | testfile1.gif |
+    | uday147@hotmail.com | udaysahni@outlook.com | testfile2.jpg |
+    | uday147@hotmail.com | uday147@hotmail.com | testfile3.png |
+    | udaysahni@outlook.com | udaysahni@outlook.com | testfile1.gif |
+    | udaysahni@outlook.com | uday147@outlook.com | testfile2.jpg |
+    
 Scenario Outline: Send an email with an invalid email
 
 Given I am logged into a Gmail account
@@ -43,27 +67,3 @@ Examples:
     | uday147@hotmail | testfile3.png |
     | udaysahnioutlook.com | testfile1.gif |
     | @outlook.com | testfile2.jpg |
- 
-    
-Scenario Outline: Send an email with a cloud file attached
-
-Given I am logged into a Gmail account
-
-When I compose an email
-
-And I specify "<recipient>" as the recipient
-
-And I attach the cloud file "<file>" to the email
-
-And I send the email
-
-Then the recipient should receive the email with the attached file
-
-Examples: 
-    | recipient | file |
-    | uday147@hotmail.com | testfile1.gif |
-    | uday147@hotmail.com | testfile2.jpg |
-    | uday147@hotmail.com | testfile3.png |
-    | udaysahni@outlook.com | testfile1.gif |
-    | udaysahni@outlook.com | testfile2.jpg |
-    

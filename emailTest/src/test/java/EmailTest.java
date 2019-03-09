@@ -14,11 +14,11 @@ public class EmailTest {
 	private final String EMAIL_PASSWORD = "mcgillecse428";
 	
 	//Change path to your local chromedriver.exe
-	private final String PATH_TO_CHROME_DRIVER = "/Users/bendwilletts/Downloads/chromedriver";
-	private final String PATH_TO_IMAGE_FILES = "/Users/bendwilletts/eclipse-workspace/ecse428-assignment-B/emailTest/resources/img/";
+//	private final String PATH_TO_CHROME_DRIVER = "/Users/bendwilletts/Downloads/chromedriver";
+//	private final String PATH_TO_IMAGE_FILES = "/Users/bendwilletts/eclipse-workspace/ecse428-assignment-B/emailTest/resources/img/";
 	
-//	String PATH_TO_CHROME_DRIVER = "/Users/udaysahni/Downloads/chromedriver";
-//	String PATH_TO_IMAGE_FILES = "/Users/udaysahni/Documents/School/ECSE428/emailTest/resources/img/";
+	String PATH_TO_CHROME_DRIVER = "/Users/udaysahni/Downloads/chromedriver";
+	String PATH_TO_IMAGE_FILES = "/Users/udaysahni/Documents/School/ECSE428/emailTest/resources/img/";
 
 	private EmailWithImage email;
 	
@@ -50,6 +50,12 @@ public class EmailTest {
 		email.enterRecipientEmail(recipient);
 	}
 	
+	@And("^I CC \"([^\"]*)\" on the email$")
+	public void specifyCCRecipient(String ccrecipient) {
+		email.clickCCButton();
+		email.enterCCEmail(ccrecipient);
+	}
+	
 	@And("^I specify an invalid recipient \"([^\"]*)\"$")
 	public void specifyInvalidRecipient(String invalidRecipient) {
 		email.enterRecipientEmail(invalidRecipient);
@@ -58,11 +64,6 @@ public class EmailTest {
 	@And("^I attach a local file \"([^\"]*)\" to the email$")
 	public void attachLocalFile(String file) {
 		email.attachFile(PATH_TO_IMAGE_FILES + file);
-	}
-	
-	@And("^I attach cloud file \"([^\"]*)\" to the email$")
-	public void attachCloudFile(String file) {
-		email.attachCloudFile(file);
 	}
 	
 	@And("^I send the email$")

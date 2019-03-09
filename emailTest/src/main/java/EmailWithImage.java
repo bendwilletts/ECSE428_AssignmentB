@@ -1,20 +1,12 @@
 
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.UnexpectedAlertBehaviour;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -48,12 +40,9 @@ public class EmailWithImage {
 	private final String SEND_BUTTON = "div[aria-label='Send ‪(⌘Enter)‬']";
 	private final String ATTACH_BUTTON = "div.a1.aaA.aMZ";
 	private final String ATTACH_LINK = "a.dO";
-	private final String ATTACH_DRIVE_FILE_BUTTON = "div.aA7.aaA.aMZ";
-	private final String DRIVE_SEARCH_BAR = "input.Mf-im-Qc-qb.d-Rb.Mf-im-Rn-yk";
-	private final String DRIVE_SEARCH_BUTTON = "div[aria-label='Search']";
-	private final String DRIVE_FILE_AREA = "div.fe-Rg-cg-O-Hj-Ij";
-	private final String DRIVE_FILE_NAME = "div.Mf-mc-nc.Mf-mc-V.V";
-	private final String INSERT_DRIVE_FILE_BUTTON = "div.a-b-c.d-u.d-u-F.Mf-tb-Qk-mk";
+	private final String NOT_RECOGNISED_ERROR_BUTTON = "button.J-at1-auR";
+	private final String NOT_RECOGNISED_ERROR = "span.Kj-JD-K7-K0";
+	
 	private final String MESSAGE_SENT_NOTIFICATION = "span.ag.a8k";
 	private final String ERROR_MESSAGE = "Error";
 
@@ -221,39 +210,7 @@ public class EmailWithImage {
 			e.printStackTrace();
 		}
 	}
-	
-	public void attachCloudFile(String fileName) {
-		try {
-			driver.findElement(By.cssSelector(ATTACH_DRIVE_FILE_BUTTON)).click();
-			
-			int frameIndex = findDriveIFrame();
-			
-			driver.switchTo().frame(frameIndex); // switch to popup window
-			
-			(new WebDriverWait(driver, 10)).until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(DRIVE_FILE_AREA)));
-			WebElement driveSearchBar = driver.findElement(By.cssSelector(DRIVE_SEARCH_BAR));
-			driveSearchBar.sendKeys(fileName);
-			
-//			WebElement driveSearchButton = driver.findElement(By.cssSelector(DRIVE_SEARCH_BUTTON));
-//			driveSearchButton.click();
-//			
-//			driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
-			
-			driveSearchBar.click();
-			WebElement fileButton = (new WebDriverWait(driver, 10))
-					.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(DRIVE_FILE_NAME)));
-			fileButton.click();
-			
-//			WebElement insertButton = (new WebDriverWait(driver, 10))
-//					.until(ExpectedConditions.elementToBeClickable(By.cssSelector(INSERT_DRIVE_FILE_BUTTON)));
-//			insertButton.click();
-//			
-			driver.switchTo().defaultContent();  // switch back to parent window
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
+		
 	public void clickSendButton() {
 		try {
 			WebElement sendButton = driver.findElement(By.cssSelector(SEND_BUTTON));
@@ -261,13 +218,13 @@ public class EmailWithImage {
 			(new WebDriverWait(driver, 10))
 	        .until(ExpectedConditions.or(
 	        		ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)),
-	        		ExpectedConditions.elementToBeClickable(By.cssSelector("button.J-at1-auR"))));
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector(NOT_RECOGNISED_ERROR_BUTTON))));
 		} catch (UnhandledAlertException uae) {
 			acceptPrompt();
 			(new WebDriverWait(driver, 10))
 	        .until(ExpectedConditions.or(
 	        		ExpectedConditions.elementToBeClickable(By.cssSelector(MESSAGE_SENT_NOTIFICATION)),
-	        		ExpectedConditions.elementToBeClickable(By.cssSelector("button.J-at1-auR"))));
+	        		ExpectedConditions.elementToBeClickable(By.cssSelector(NOT_RECOGNISED_ERROR_BUTTON))));
 		}
 	}
 	
@@ -289,7 +246,7 @@ public class EmailWithImage {
 	}
 	
 	public boolean confirmNotRecognisedError() {
-		String errorMessage = driver.findElement(By.cssSelector("span.Kj-JD-K7-K0")).getText();
+		String errorMessage = driver.findElement(By.cssSelector(NOT_RECOGNISED_ERROR)).getText();
 		return(errorMessage.equals(ERROR_MESSAGE));
 	}
 	
@@ -372,20 +329,4 @@ public class EmailWithImage {
 	private void acceptPrompt() {
 		driver.switchTo().alert().accept();
 	}
-	
-	private int findDriveIFrame() {
-		int size = driver.findElements(By.tagName("iframe")).size();
-		int frameIndex = -1;
-		System.out.println(size);
-	    for(int i=0; i<size; i++){
-			driver.switchTo().frame(i);
-			int total=driver.findElements(By.cssSelector(DRIVE_FILE_AREA)).size();
-			if (total > 0) {
-				frameIndex = i;
-			}
-			driver.switchTo().defaultContent();
-	    }
-	    return frameIndex;
-	}
-	
 }
